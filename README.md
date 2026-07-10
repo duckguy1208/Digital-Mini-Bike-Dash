@@ -1,5 +1,12 @@
 # PicoDash: DIY MicroPython Digital Dashboard
 
+___
+
+A custom DIY digital vehicle dashboard built with a Raspberry Pi Pico and MicroPython, featuring a live GPS/magnet-based speedometer, an inductive pulse tachometer, and an SPI engine temperature monitor.
+
+
+---
+
 An open-source, instant-on digital dashboard designed for small vehicles, go-karts, and mini jeeps. This project uses a **Raspberry Pi Pico** running **MicroPython** to interface with physical engine sensors and output live telemetry data to a bright SPI LCD display.
 
 ##  Features
