@@ -9,7 +9,7 @@ An open-source, instant-on digital dashboard designed for small vehicles, go-kar
 ##  Features
 * **Instant-On Boot Time:** No operating system lag—boots up the millisecond the vehicle key is turned.
 * **Speedometer:** Real-time speed calculation using an A3144 Hall Effect sensor and wheel magnets.
-* **Tachometer (RPM):** Isolated inductive pickup wrapped around the spark plug wire, safely processed via a PC817 optocoupler.
+* **Tachometer (11K RPM):** Isolated inductive pickup wrapped around the spark plug wire, safely processed via a PC817 optocoupler.
 * **Engine Temperature:** High-temperature tracking via a MAX6675 module and a K-Type thermocouple ring mounted under the spark plug.
 * **Custom UI:** Lightweight graphics rendering built using MicroPython's primitive drawing libraries.
 
