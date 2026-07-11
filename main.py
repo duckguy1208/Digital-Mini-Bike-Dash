@@ -1,76 +1,146 @@
 import tkinter as tk
+import math
 
-root = tk.Tk()
-root.title("Dashboard Simulator (No Hardware Needed)")
-root.geometry("1024x600")
-root.configure(bg='black')
-
-canvas = tk.Canvas(root, width=1024, height=600, bg='black', highlightthickness=0)
-canvas.pack()
-
-# Global tracking variables
-current_layout = "s2000"
-simulated_rpm = 0
-
-# Create structural UI layers
-rpm_bar = canvas.create_polygon(0, 0, 0, 0, fill='yellow')
-rpm_arc = canvas.create_arc(362, 150, 662, 450, start=225, extent=0, style='arc', outline='red', width=8)
-text_label = canvas.create_text(512, 500, text="RPM: 0", font=("Arial", 30), fill="white")
-mode_label = canvas.create_text(512, 50, text="Layout: S2000 (Tap Screen to Swap)", font=("Arial", 18), fill="cyan")
-
-def update_simulated_ui():
-    """ Redraws the screen based on the simulated_rpm variable """
-    max_rpm = 11000
-    
-    # Update the text readout
-    canvas.itemconfig(text_label, text=f"RPM: {simulated_rpm}")
-    
-    if current_layout == "s2000":
-        # Hide the circular arc, calculate and show the sweeping bar
-        canvas.itemconfig(rpm_arc, extent=0)
-        max_width = 800
-        current_width = (simulated_rpm / max_rpm) * max_width
-        points = [112, 300,  112 + current_width, 300,  112 + current_width, 220,  112, 260]
-        canvas.coords(rpm_bar, *points)
+class S2000Cluster:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Honda S2000 Digital Cluster (11k RPM)")
+        self.root.configure(bg="#050505")
+        self.root.resizable(False, False)
         
-        # Color safety zones
-        color = "red" if simulated_rpm >= 8500 else ("orange" if simulated_rpm >= 6000 else "yellow")
-        canvas.itemconfig(rpm_bar, fill=color)
+        # Dimensions and Constants
+        self.WIDTH = 850
+        self.HEIGHT = 400
+        self.MAX_RPM = 11000
+        self.NUM_BARS = 60
         
-    elif current_layout == "delsol":
-        # Hide the sweeping bar, calculate and show the circular arc
-        canvas.coords(rpm_bar, 0, 0, 0, 0)
-        total_degrees = -270
-        current_angle = (simulated_rpm / max_rpm) * total_degrees
-        canvas.itemconfig(rpm_arc, extent=current_angle)
+        # Dashboard Canvas
+        self.canvas = tk.Canvas(
+            root, width=self.WIDTH, height=self.HEIGHT, 
+            bg="#0b0b0b", highlightthickness=2, highlightbackground="#222222"
+        )
+        self.canvas.pack(pady=20, padx=20)
         
-        color = "red" if simulated_rpm >= 8500 else "orange"
-        canvas.itemconfig(rpm_arc, outline=color)
+        # Speedometer Display
+        self.speed_label = tk.Label(
+            self.canvas, text="0", font=("Consolas", 68, "bold"), 
+            fg="#ffb400", bg="#0b0b0b"
+        )
+        self.canvas.create_window(425, 245, window=self.speed_label)
+        
+        self.canvas.create_text(
+            550, 280, text="mph", fill="#ffaa00", font=("Arial", 14, "bold")
+        )
 
-def handle_mouse_move(event):
-    """ Tracks your mouse cursor X position to fake engine throttle """
-    global simulated_rpm
-    # Map mouse X coordinates (0 to 1024) to RPM (0 to 11000)
-    percentage = event.x / 1024
-    if percentage < 0: percentage = 0
-    if percentage > 1: percentage = 1
-    
-    simulated_rpm = int(percentage * 11000)
-    update_simulated_ui()
+        # Draw Base Elements
+        self.draw_static_elements()
+        
+        # Bind Mouse Movement
+        self.canvas.bind("<Motion>", self.on_mouse_move)
 
-def handle_screen_tap(event):
-    """ Swaps layouts on click/tap """
-    global current_layout
-    if current_layout == "s2000":
-        current_layout = "delsol"
-        canvas.itemconfig(mode_label, text="Layout: Del Sol VTEC")
-    else:
-        current_layout = "s2000"
-        canvas.itemconfig(mode_label, text="Layout: S2000")
-    update_simulated_ui()
+        # Initial render
+        self.update_cluster(0)
 
-# Bind mouse movements and clicks for desktop testing
-root.bind("<Motion>", handle_mouse_move)
-root.bind("<Button-1>", handle_screen_tap)
+    def get_arc_geometry(self, t):
+        """Calculates point on arc, normal vector, and bar coordinates for any progress t (0.0 to 1.0)."""
+        x1 = 110 + (t * 630)
+        arc_height = math.sin(t * math.pi) * 40
+        y1 = 140 - arc_height
+        
+        dx = 1.0
+        dy = -math.cos(t * math.pi) * (45 * math.pi / 630)
+        length = math.hypot(dx, dy)
+        
+        nx, ny = -dy / length, dx / length  # Normal vector pointing downwards/inwards
+        
+        bar_length = 34
+        x2 = x1 + nx * bar_length
+        y2 = y1 + ny * bar_length
+        
+        return x1, y1, x2, y2, nx, ny
 
-root.mainloop()
+    def get_bar_coordinates(self, index):
+        t = index / float(self.NUM_BARS - 1)
+        x1, y1, x2, y2, _, _ = self.get_arc_geometry(t)
+        return x1, y1, x2, y2
+
+    def draw_static_elements(self):
+        # Temp Gauge (Left Side) - Horizontal Right to Left (H on Right, C on Left)
+        self.canvas.create_text(110, 310, text="C", fill="#ffaa00", font=("Arial", 11, "bold"))
+        self.canvas.create_text(175, 310, text="H", fill="#ffaa00", font=("Arial", 11, "bold"))
+        for i in range(7):
+            x = 160 - (i * 7)
+            self.canvas.create_rectangle(x, 303, x - 4, 317, fill="#221500", outline="")
+
+        # Fuel Gauge (Right Side) - Horizontal Right to Left (F on Right, E on Left)
+        self.canvas.create_text(675, 310, text="F", fill="#ffaa00", font=("Arial", 11, "bold"))
+        self.canvas.create_text(740, 310, text="E", fill="#ffaa00", font=("Arial", 11, "bold"))
+        for i in range(7):
+            x = 725 - (i * 7)
+            self.canvas.create_rectangle(x, 303, x - 4, 317, fill="#221500", outline="")
+
+        # Unlit Background LED Bars
+        for i in range(self.NUM_BARS):
+            x1, y1, x2, y2 = self.get_bar_coordinates(i)
+            self.canvas.create_line(x1, y1, x2, y2, fill="#221800", width=6)
+
+        # Draw Tick Marks & Numbers BELOW the Tachometer Arc
+        # Ticks generated every 0.5 RPM step from 0.5 to 11.0
+        for step in range(0, 23):
+            rpm_val = step * 0.5
+            t = rpm_val / 11.0
+            
+            x1, y1, x2, y2, nx, ny = self.get_arc_geometry(t)
+            
+            is_whole_num = (step % 2 == 0)
+            color = "#ff3333" if rpm_val >= 9 else "#ffaa00"
+            
+            if is_whole_num:
+                # Major Tick Mark below segment
+                tx = x2 + nx * 10
+                ty = y2 + ny * 10
+                self.canvas.create_line(x2, y2, tx, ty, fill=color, width=2)
+                
+                # Number Positioned below the major tick
+                num = int(rpm_val)
+                lbl_x = x2 + nx * 25
+                lbl_y = y2 + ny * 25
+                self.canvas.create_text(lbl_x, lbl_y, text=str(num), fill=color, font=("Arial", 11, "bold"))
+            else:
+                # Minor Tick Mark (halfway RPMs like 0.5, 1.5, 2.5...)
+                tx = x2 + nx * 4
+                ty = y2 + ny * 4
+                self.canvas.create_line(x2, y2, tx, ty, fill=color, width=1)
+
+    def on_mouse_move(self, event):
+        min_x, max_x = 110, 740
+        clamped_x = max(min_x, min(event.x, max_x))
+        percentage = (clamped_x - min_x) / float(max_x - min_x)
+        current_rpm = percentage * 11500  # Allows revving past 11k redline
+        self.update_cluster(current_rpm)
+
+    def update_cluster(self, rpm):
+        self.canvas.delete("active_bars")
+        active_count = int((rpm / float(self.MAX_RPM)) * self.NUM_BARS)
+        
+        for i in range(min(active_count, self.NUM_BARS)):
+            x1, y1, x2, y2 = self.get_bar_coordinates(i)
+            segment_rpm = (i / float(self.NUM_BARS)) * self.MAX_RPM
+            
+            # RPM Color Bands
+            if segment_rpm >= 10000:
+                color = "#ff1a1a"  # Redline (10k+)
+            elif segment_rpm >= 9000:
+                color = "#ff6600"  # VTEC zone (9k - 10k)
+            else:
+                color = "#ffaa00"  # Amber (0 - 9k)
+                
+            self.canvas.create_line(x1, y1, x2, y2, fill=color, width=6, tags="active_bars")
+
+        simulated_speed = int((rpm / 11000.0) * 145) if rpm > 500 else 0
+        self.speed_label.config(text=str(simulated_speed))
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = S2000Cluster(root)
+    root.mainloop()
