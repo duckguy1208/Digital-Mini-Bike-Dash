@@ -279,6 +279,4 @@ if __name__ == "__main__":
     app = ClusterApp(root)
     root.mainloop()
 
-    app = S2000Cluster(root)
-    root.mainloop()
-'''
+   
