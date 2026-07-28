@@ -1,6 +1,6 @@
 # DIY ESP32 Honda-Style Digital Cluster for Pit Bikes
 
-An open-source, low-cost digital dashboard designed for small motorcycles, dirt bikes, and pit bikes (specifically built and tested for a **Lifan 125cc swapped CRF50**). 
+An open-source, low-cost digital dashboard designed for small motorcycles, dirt bikes, and pit bikes (specifically built for a **Lifan 125cc swapped CRF50** And a **Built GX200 swapped RT100**). 
 
 This project emulates the iconic **Honda S2000 AP1 digital tachometer/speedometer arc** and an **EG Civic analog cluster**, running efficiently on an **ESP32 microcontroller** with MicroPython.
 
