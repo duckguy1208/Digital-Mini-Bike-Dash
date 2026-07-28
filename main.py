@@ -13,6 +13,9 @@ class ClusterApp:
         
         # Shared Physics State
         self.current_rpm = 0
+        self.current_temp = 45  # Temp Percentage (0% = Cold, 100% = Overheating)
+        self.current_fuel = 85  # Fuel / Battery Percentage (0% = Empty, 100% = Full)
+        
         self.MAX_RPM = 11000
         self.NUM_BARS = 60
         
@@ -47,13 +50,14 @@ class ClusterApp:
 
         # Instructions Footer
         self.info_text = self.canvas.create_text(
-            425, 395, text="[ Move mouse left/right to rev engine | Click anywhere to swap cluster ]", 
+            425, 395, text="[ Mouse X = RPM | Scroll Wheel = Temp/Battery | Click = Swap Cluster ]", 
             fill="#666666", font=("Arial", 9, "italic")
         )
 
         # Bindings
         self.canvas.bind("<Motion>", self.on_mouse_move)
         self.canvas.bind("<Button-1>", lambda e: self.toggle_cluster())
+        self.canvas.bind("<MouseWheel>", self.on_mouse_wheel)  # Scroll wheel alters temp/fuel
 
         # Render initial view
         self.draw_static_base()
@@ -72,9 +76,8 @@ class ClusterApp:
         self.draw_static_base()
         self.update_cluster(self.current_rpm)
 
-    # --- YOUR CUSTOM S2000 DIGITAL GEOMETRY ---
+    # --- S2000 DIGITAL GEOMETRY MATH ---
     def get_s2000_arc(self, t):
-        """Calculates point on arc, normal vector, and bar coordinates for any progress t (0.0 to 1.0)."""
         x1 = 110 + (t * 630)
         arc_height = math.sin(t * math.pi) * 40
         y1 = 140 - arc_height
@@ -83,8 +86,7 @@ class ClusterApp:
         dy = -math.cos(t * math.pi) * (45 * math.pi / 630)
         length = math.hypot(dx, dy)
         
-        nx, ny = -dy / length, dx / length  # Normal vector pointing downwards/inwards
-        
+        nx, ny = -dy / length, dx / length
         bar_length = 34
         x2 = x1 + nx * bar_length
         y2 = y1 + ny * bar_length
@@ -97,14 +99,13 @@ class ClusterApp:
         
         # Re-create help footer
         self.info_text = self.canvas.create_text(
-            425, 395, text="[ Move mouse left/right to rev engine | Click anywhere to swap cluster ]", 
+            425, 395, text="[ Mouse X = RPM | Scroll Wheel = Temp/Battery | Click = Swap Cluster ]", 
             fill="#666666", font=("Arial", 9, "italic")
         )
 
         if self.cluster_mode == "s2000":
             self.canvas.config(bg="#0b0b0b")
 
-            # Ensure no previous speed label widget remains
             try:
                 self.speed_label.destroy()
             except Exception:
@@ -118,19 +119,13 @@ class ClusterApp:
             self.speed_window = self.canvas.create_window(425, 245, window=self.speed_label)
             self.canvas.create_text(550, 280, text="mph", fill="#ffaa00", font=("Arial", 14, "bold"))
 
-            # Temp Gauge (Left Side) - Horizontal Right to Left (H on Right, C on Left)
+            # Temp Gauge Labels (Left Side)
             self.canvas.create_text(110, 310, text="C", fill="#ffaa00", font=("Arial", 11, "bold"))
             self.canvas.create_text(175, 310, text="H", fill="#ffaa00", font=("Arial", 11, "bold"))
-            for i in range(7):
-                x = 160 - (i * 7)
-                self.canvas.create_rectangle(x, 303, x - 4, 317, fill="#221500", outline="")
 
-            # Fuel Gauge (Right Side) - Horizontal Right to Left (F on Right, E on Left)
-            self.canvas.create_text(675, 310, text="F", fill="#ffaa00", font=("Arial", 11, "bold"))
-            self.canvas.create_text(740, 310, text="E", fill="#ffaa00", font=("Arial", 11, "bold"))
-            for i in range(7):
-                x = 725 - (i * 7)
-                self.canvas.create_rectangle(x, 303, x - 4, 317, fill="#221500", outline="")
+            # Fuel / Battery Gauge Labels (Right Side) - flipped: E on left, F on right
+            self.canvas.create_text(675, 310, text="E", fill="#ffaa00", font=("Arial", 11, "bold"))
+            self.canvas.create_text(740, 310, text="F", fill="#ffaa00", font=("Arial", 11, "bold"))
 
             # Unlit Background LED Bars
             for i in range(self.NUM_BARS):
@@ -138,29 +133,25 @@ class ClusterApp:
                 x1, y1, x2, y2, _, _ = self.get_s2000_arc(t)
                 self.canvas.create_line(x1, y1, x2, y2, fill="#221800", width=6, tags="bg_bars")
 
-            # Draw Tick Marks & Numbers BELOW the Tachometer Arc (Step 0 to 22)
+            # Draw Tick Marks & Numbers BELOW the Tachometer Arc
             for step in range(0, 23):
                 rpm_val = step * 0.5
                 t = rpm_val / 11.0
-                
                 x1, y1, x2, y2, nx, ny = self.get_s2000_arc(t)
                 
                 is_whole_num = (step % 2 == 0)
                 color = "#ff3333" if rpm_val >= 10 else "#ffaa00"
                 
                 if is_whole_num:
-                    # Major Tick Mark below segment
                     tx = x2 + nx * 10
                     ty = y2 + ny * 10
                     self.canvas.create_line(x2, y2, tx, ty, fill=color, width=2)
                     
-                    # Number Positioned below the major tick
                     num = int(rpm_val)
                     lbl_x = x2 + nx * 25
                     lbl_y = y2 + ny * 25
                     self.canvas.create_text(lbl_x, lbl_y, text=str(num), fill=color, font=("Arial", 11, "bold"))
                 else:
-                    # Minor Tick Mark
                     tx = x2 + nx * 4
                     ty = y2 + ny * 4
                     self.canvas.create_line(x2, y2, tx, ty, fill=color, width=1)
@@ -174,48 +165,57 @@ class ClusterApp:
         except Exception:
             pass
 
-        # Right Gauge (Temp & Fuel)
-        self.draw_analog_dial(680, 200, 100, "TEMP / FUEL")
-        self.canvas.create_text(640, 160, text="C", fill="#e0e0e0", font=("Arial", 10, "bold"))
-        self.canvas.create_text(640, 230, text="H", fill="#ff3333", font=("Arial", 10, "bold"))
-        self.canvas.create_text(720, 160, text="F", fill="#e0e0e0", font=("Arial", 10, "bold"))
-        self.canvas.create_text(720, 230, text="E", fill="#e0e0e0", font=("Arial", 10, "bold"))
-        self.draw_needle(680, 200, 80, 210, color="#ffaa00", width=2) # Temp Needle
-        self.draw_needle(680, 200, 80, 330, color="#ffaa00", width=2) # Fuel Needle
+        # Right Gauge Circle (contains two small dials with separate pivots: TEMP and FUEL)
+        self.draw_analog_dial(680, 200, 100, "")
+        # Small Temp/Fuel pivots (no circles) - pivots next to each other with a vertical gap
+        t_px, t_py = 668, 190
+        # place fuel pivot inline with temp pivot, slightly lower (vertical gap)
+        f_px, f_py = t_px, t_py + 20
+        # Temp markers (C/H)
+        self.canvas.create_text(t_px, t_py - 32, text="C", fill="#e0e0e0", font=("Arial", 9, "bold"))
+        self.canvas.create_text(t_px, t_py + 32, text="H", fill="#ff3333", font=("Arial", 9, "bold"))
+        # Fuel markers (E/F) aligned vertically with C/H
+        self.canvas.create_text(f_px - 12, t_py - 32, text="E", fill="#e0e0e0", font=("Arial", 9, "bold"))
+        self.canvas.create_text(f_px + 12, t_py + 32, text="F", fill="#e0e0e0", font=("Arial", 9, "bold"))
 
-        # Center Gauge (Tachometer)
-        self.draw_analog_dial(425, 200, 140, "RPM x1000")
-        self.draw_analog_ticks(425, 200, 140, min_val=0, max_val=11, redline_val=8.2)
+        # Center Gauge (Speedometer) -- swapped with tach
+        self.draw_analog_dial(425, 200, 140, "MPH")
+        self.draw_analog_ticks(425, 200, 140, min_val=0, max_val=140, step=10, redline_val=99)
 
-        # Left Gauge (Speedometer)
-        self.draw_analog_dial(170, 200, 100, "MPH")
-        self.draw_analog_ticks(170, 200, 100, min_val=0, max_val=14, step=2, redline_val=99)
+        # Left Gauge (Tachometer) -- swapped with speedometer
+        self.draw_analog_dial(170, 200, 100, "RPM x1000")
+        self.draw_analog_ticks(170, 200, 100, min_val=0, max_val=11, step=1, redline_val=8.2)
 
     def draw_analog_dial(self, cx, cy, radius, label):
         self.canvas.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill="#080808", outline="#2a2a2a", width=4)
         self.canvas.create_text(cx, cy + radius - 35, text=label, fill="#888888", font=("Arial", 9, "bold"))
 
-    def draw_analog_ticks(self, cx, cy, radius, min_val, max_val, step=1, redline_val=8.0):
+    def draw_analog_ticks(self, cx, cy, radius, min_val, max_val, step=1, redline_val=8.0, show_labels=True):
         start_angle, end_angle = 210, -30
         angle_range = start_angle - end_angle
         total_steps = int((max_val - min_val) / step)
-        
+
+        # Dynamic offsets so small dials don't overlap labels/ticks
+        txt_offset = 36 if radius > 60 else max(10, int(radius * 0.3))
+        inner_offset = 22 if radius > 50 else int(radius * 0.45)
+
         for i in range(total_steps + 1):
             val = min_val + (i * step)
             frac = i / float(total_steps)
             angle = math.radians(start_angle - (frac * angle_range))
             color = "#ff3333" if val >= redline_val else "#e0e0e0"
-            
+
             x_out = cx + (radius - 10) * math.cos(angle)
             y_out = cy - (radius - 10) * math.sin(angle)
-            x_in = cx + (radius - 22) * math.cos(angle)
-            y_in = cy - (radius - 22) * math.sin(angle)
-            
+            x_in = cx + (radius - inner_offset) * math.cos(angle)
+            y_in = cy - (radius - inner_offset) * math.sin(angle)
+
             self.canvas.create_line(x_out, y_out, x_in, y_in, fill=color, width=2)
-            
-            x_txt = cx + (radius - 36) * math.cos(angle)
-            y_txt = cy - (radius - 36) * math.sin(angle)
-            self.canvas.create_text(x_txt, y_txt, text=str(val), fill=color, font=("Arial", 10, "bold"))
+
+            if show_labels:
+                x_txt = cx + (radius - txt_offset) * math.cos(angle)
+                y_txt = cy - (radius - txt_offset) * math.sin(angle)
+                self.canvas.create_text(x_txt, y_txt, text=str(val), fill=color, font=("Arial", 10, "bold"))
 
     def draw_needle(self, cx, cy, length, angle_deg, color="#ffaa00", width=3, tag="needle"):
         rad = math.radians(angle_deg)
@@ -225,7 +225,7 @@ class ClusterApp:
         self.canvas.create_line(cx, cy, x_end, y_end, fill=color, width=width, tags=tag)
         self.canvas.create_oval(cx - 8, cy - 8, cx + 8, cy + 8, fill="#222", outline="#ffaa00", width=2, tags=tag)
 
-    # --- ENGINE SIMULATION & MOUSE INPUT ---
+    # --- ENGINE SIMULATION & INPUTS ---
     def on_mouse_move(self, event):
         min_x, max_x = 110, 740
         clamped_x = max(min_x, min(event.x, max_x))
@@ -233,9 +233,16 @@ class ClusterApp:
         self.current_rpm = percentage * 11500
         self.update_cluster(self.current_rpm)
 
+    def on_mouse_wheel(self, event):
+        # Mouse wheel up raises Temp & lowers Fuel/Battery; down does the inverse
+        step = 5 if event.delta > 0 else -5
+        self.current_temp = max(0, min(100, self.current_temp + step))
+        self.current_fuel = max(0, min(100, self.current_fuel - step))
+        self.update_cluster(self.current_rpm)
+
     def update_cluster(self, rpm):
         if self.cluster_mode == "s2000":
-            # Digital S2000 Bar Updates
+            # 1. Update Active Tachometer Arc Bars
             self.canvas.delete("active_bars")
             active_count = int((rpm / float(self.MAX_RPM)) * self.NUM_BARS)
             
@@ -253,30 +260,62 @@ class ClusterApp:
                     
                 self.canvas.create_line(x1, y1, x2, y2, fill=color, width=6, tags="active_bars")
 
+            # 2. Update Digital Speedometer Number
             simulated_speed = int((rpm / 11000.0) * 145) if rpm > 500 else 0
             self.speed_label.config(text=str(simulated_speed))
+
+            # 3. Dynamic Temp Gauge (Left Side, 7 Bars)
+            self.canvas.delete("temp_bars")
+            active_temp_bars = int((self.current_temp / 100.0) * 7)
+            for i in range(7):
+                x = 122 + (i * 7)  # Fill left to right toward 'H'
+                color = "#ffaa00" if i < active_temp_bars else "#221500"
+                if i >= 5 and i < active_temp_bars:
+                    color = "#ff1a1a"  # Red warning for high temp
+                self.canvas.create_rectangle(x, 303, x + 4, 317, fill=color, outline="", tags="temp_bars")
+
+            # 4. Dynamic Fuel / Battery Gauge (Right Side, 7 Bars) - flipped orientation
+            self.canvas.delete("fuel_bars")
+            active_fuel_bars = int((self.current_fuel / 100.0) * 7)
+            for i in range(7):
+                # Fill left to right so the rightmost bars represent FULL (F)
+                x = 676 + (i * 7)
+                if i < active_fuel_bars:
+                    # If overall fuel is very low, show lit bars in red
+                    color = "#ff1a1a" if active_fuel_bars <= 2 else "#ffaa00"
+                else:
+                    color = "#221500"
+                self.canvas.create_rectangle(x, 303, x + 4, 317, fill=color, outline="", tags="fuel_bars")
+
         else:
-            # Analog Del Sol Sweeping Needles
+            # Analog Sweeping Needles
             self.canvas.delete("needle")
             
-            # Tachometer Needle
+            # Tachometer Needle (Left Gauge)
             rpm_frac = min(rpm / 11000.0, 1.0)
             tach_angle = 210 - (rpm_frac * 240)
-            self.draw_needle(425, 200, 105, tach_angle, color="#ffaa00", width=4)
+            self.draw_needle(170, 200, 85, tach_angle, color="#ffaa00", width=4)
 
-            # Speedometer Needle
+            # Speedometer Needle (Center Gauge)
             simulated_speed = (rpm / 11000.0) * 140 if rpm > 500 else 0
             speed_frac = min(simulated_speed / 140.0, 1.0)
             speed_angle = 210 - (speed_frac * 240)
-            self.draw_needle(170, 200, 75, speed_angle, color="#ffaa00", width=3)
+            self.draw_needle(425, 200, 105, speed_angle, color="#ffaa00", width=4)
 
-            # Static Temp / Fuel Needles
-            self.draw_needle(680, 200, 70, 195, color="#ffaa00", width=2)
-            self.draw_needle(680, 200, 70, -15, color="#ffaa00", width=2)
+            # Draw Temp Needle at its own pivot (t_px,t_py)
+            self.canvas.delete("eg_temp_needle")
+            t_px, t_py = 668, 190
+            # Map 0-100% to 210 -> -30 so both needles use same angle mapping (parallel)
+            temp_angle = 210 - ((self.current_temp / 100.0) * 240)
+            self.draw_needle(t_px, t_py, 46, temp_angle, color="#ff3333", width=3, tag="eg_temp_needle")
+
+            # Draw Fuel Needle at its own pivot (f_px,f_py)
+            self.canvas.delete("eg_fuel_needle")
+            f_px, f_py = 692, 210
+            fuel_angle = 210 - ((self.current_fuel / 100.0) * 240)
+            self.draw_needle(f_px, f_py, 46, fuel_angle, color="#ffffff", width=3, tag="eg_fuel_needle")
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = ClusterApp(root)
     root.mainloop()
-
-   
