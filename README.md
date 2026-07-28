@@ -1,47 +1,50 @@
-# Custom Digital Dashboard for Mini Bikes and Dirt Bikes
+#  DIY ESP32 Honda-Style Digital Cluster for Pit Bikes
 
-A rugged, trail-ready digital dashboard powered by a **Raspberry Pi 4 / Zero 2 W** and a **7-inch HDMI Touchscreen**. This system runs a custom **Python Tkinter GUI** to provide real-time telemetry (Speedometer, Tachometer, and Engine Temperature) with dynamic touchscreen skin-swapping (S2000 sweeping tachometer and CRX Del Sol circular gauge).
+An open-source, low-cost digital dashboard designed for small motorcycles, dirt bikes, and pit bikes (specifically built and tested for a **Lifan 125cc swapped CRF50**). 
 
-Designed to seamlessly swap between a custom **Mini Jeep**, a **Honda CRF50**, and a **Gx200 Mini Bike** using a unified multi-pin waterproof wiring harness.
-
----
-
-##  System Architecture & Component List
-
-### Core Electronics
-* **Single Board Computer:** Raspberry Pi 4 (2GB/4GB) or Raspberry Pi Zero 2 W
-* **Display:** 7-inch HDMI IPS Touchscreen Display (1024x600 native resolution)
-* **Storage:** 32GB or 64GB High-End Endurance MicroSD Card
-* **Video:** Short Micro-HDMI to HDMI Cable
-
-### Power Management & Safe Shutdown
-* **Smart Shutdown Switch:** Mausberry Circuits Automotive USB Switch or CarPiHat
-* **Voltage Regulator:** 12V-to-5V Step-Down Buck Converter (for constant battery line protection)
-
-### Telemetry Sensors
-* **Speedometer:** A3144 Hall Effect Sensor Module + Neodymium Hub Magnets
-* **Tachometer:** PC817 Optocoupler Module (for high-voltage spark plug inductive isolation)
-* **Engine Temperature:** MAX6675 SPI Module with a K-Type Thermocouple Ring Probe
-
-### Fabrication & Housing
-* **Enclosure:** Heavy-duty ABS Plastic Project Box (sealed with clear silicone)
-* **Harnessing:** Waterproof Multi-Pin Automotive Connector Plug
-* **Mounting:** 3M Dual Lock Reclosable Fasteners or Action-Camera Handlebar Clamps
+This project emulates the iconic **Honda S2000 AP1 digital tachometer/speedometer arc** and an **EG Civic analog cluster**, running efficiently on an **ESP32 microcontroller** with MicroPython.
 
 ---
 
-## Hardware Pinout Mapping
+##  Features
 
-All connections map directly to the Raspberry Pi's 40-pin GPIO header (3.3V Logic Max):
+* **Dual Cluster Modes:** Switch between a digital **S2000 arc style gauge** and an **EG Civic analog needle gauge**.
+* **Instant Boot:** Powers on in under 0.5 seconds—no heavy OS boot time.
+* **Non-Invasive Electrical Setup:** Designed to run via a standalone USB power bank switched on/off through the bike's stock key ignition switch.
+* **Hardware Isolation:** Isolates raw spark plug ignition noise using optocouplers to protect microelectronics.
+* **Built-in Desktop Simulator:** Test and refine code in **VS Code** using **Wokwi** without plugging in physical hardware.
 
-| Sensor / Module | Sensor Pin | Pi GPIO / Pin | Description |
-| :--- | :--- | :--- | :--- |
-| **A3144 Speedometer** | VCC | Pin 1 or 2 | Power (3.3V or 5V based on module) |
-| | GND | Pin 6 | Ground |
-| | Signal | **Pin 11 (GPIO 17)** | Pulse input from wheel magnets |
-| **PC817 Tachometer** | Input Side | *Spark Wire* | Wrapped 5-10 times around spark plug lead |
-| | Output Collector | Pin 2 or 1 | 3.3V Pull-Up Power source |
-| | Output Emitter | **Pin 13 (GPIO 27)** | Cleaned RPM square-wave pulse signal |
-| | Output Ground | Pin 9 | System Ground |
-| **MAX6675 Temperature** | GND | Pin 14 | Ground |
-| | VCC |
+---
+
+##  Hardware Requirements & Components
+
+| Component | Purpose | Recommended Model / Notes |
+| :--- | :--- | :--- |
+| **Microcontroller + Screen** | Core brain & visual UI | ESP32 Cheap Yellow Display (CYD 2.8") or Waveshare 2.1" Round Display |
+| **Tachometer Isolation** | Ignition noise protection | PC817 1-Channel Optocoupler Module |
+| **RPM Pickup** | Spark plug pulse sensing | 22 AWG Solid Core Wire wrapped 4–6 times around the spark plug boot |
+| **Speedometer Sensor** | Wheel rotation counting | NJK-5002C Hall Effect Proximity Sensor + Neodymium Magnet |
+| **Pull-up Resistor** | Signal stabilization | 10kΩ Resistor |
+| **Power Source** | Clean 5V power supply | Compact 5,000mAh USB Power Bank |
+| **Key Switch Integration** | Automated power ON/OFF | Switched positive wire tapped into CRF50 Key Harness |
+
+---
+
+##  Wiring Overview
+
+### 1. Speedometer (Hall Effect Sensor)
+* **VCC:** Connects to `3.3V` on ESP32
+* **GND:** Connects to `GND` on ESP32
+* **Signal:** Connects to **`GPIO 35`** (with a $10\text{k}\Omega$ pull-up resistor to `3.3V`)
+
+### 2. Tachometer (Spark Plug RPM)
+* **High Voltage Side:** Inductive wire wrap around spark plug lead $\rightarrow$ **IN+** on PC817 Optocoupler; Frame Ground $\rightarrow$ **IN-**
+* **Low Voltage Side:** * **VCC:** Connects to `3.3V` on ESP32
+  * **GND:** Connects to `GND` on ESP32
+  * **OUT:** Connects to **`GPIO 22`** on ESP32
+
+### 3. Power Supply
+* **Red (+5V Wire):** Routed through the **CRF50 Key Switch** $\rightarrow$ **`VIN` (5V)** pin on ESP32.
+* **Black (GND Wire):** Connected directly to **`GND`** on ESP32.
+
+---
