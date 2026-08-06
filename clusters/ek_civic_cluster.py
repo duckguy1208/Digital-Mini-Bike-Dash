@@ -32,11 +32,11 @@ class EKCivicCluster(BaseCluster):
         t_px, t_py = 755, 200  # Temp pivot (right side)
 
         # Labels sitting near outer edges
-        self.canvas.create_text(f_px + 5, f_py - 35, text="F", fill="#e0e0e0", font=("Eurostile", 15, "bold"))
-        self.canvas.create_text(f_px + 5, f_py + 35, text="E", fill="#e0e0e0", font=("Eurostile", 10, "bold"))
+        self.canvas.create_text(f_px + 10, f_py - 35, text="F", fill="#e0e0e0", font=("Orbitron", 10, "bold"))
+        self.canvas.create_text(f_px + 10, f_py + 35, text="E", fill="#e0e0e0", font=("Orbitron", 10, "bold"))
 
-        self.canvas.create_text(t_px - 5, t_py - 35, text="H", fill="#ff3333", font=("Eurostile", 9, "bold"))
-        self.canvas.create_text(t_px - 5, t_py + 35, text="C", fill="#e0e0e0", font=("Eurostile", 9, "bold"))
+        self.canvas.create_text(t_px - 10, t_py - 35, text="H", fill="#e0e0e0", font=("Orbitron", 10, "bold"))
+        self.canvas.create_text(t_px - 10, t_py + 35, text="C", fill="#e0e0e0", font=("Orbitron", 10, "bold"))
 
         # --- SPEEDOMETER (Restored 100 MPH) ---
         self.draw_analog_dial(425, 200, 140, "MPH")
@@ -49,7 +49,7 @@ class EKCivicCluster(BaseCluster):
     def draw_analog_dial(self, cx, cy, radius, label):
         self.canvas.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill="#080808", outline="#2a2a2a", width=4)
         if label:
-            self.canvas.create_text(cx, cy + radius - 35, text=label, fill="#888888", font=("Eurostile", 9, "bold"))
+            self.canvas.create_text(cx, cy + radius - 35, text=label, fill="#888888", font=("Orbitron", 9, "bold"))
 
     def draw_analog_ticks(self, cx, cy, radius, min_val, max_val, step=1, redline_val=8.0, show_labels=True):
         start_angle, end_angle = 210, -30
@@ -75,7 +75,7 @@ class EKCivicCluster(BaseCluster):
             if show_labels:
                 x_txt = cx + (radius - txt_offset) * math.cos(angle)
                 y_txt = cy - (radius - txt_offset) * math.sin(angle)
-                self.canvas.create_text(x_txt, y_txt, text=str(val), fill=color, font=("Eurostile", 10, "bold"))
+                self.canvas.create_text(x_txt, y_txt, text=str(val), fill=color, font=("Orbitron", 10, "bold"))
 
     def draw_needle(self, cx, cy, length, angle_deg, color="#ffcc00", width=3, tag="needle"):
         rad = math.radians(angle_deg)
