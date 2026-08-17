@@ -2,6 +2,8 @@ import tkinter as tk
 
 from clusters.ek_civic_cluster import EKCivicCluster
 from clusters.s2000_cluster import S2000Cluster
+from clusters.del_sol_cluster import DelSolCluster
+
 
 
 class ClusterApp:
@@ -24,7 +26,7 @@ class ClusterApp:
 
         self.toggle_btn = tk.Button(
             self.top_frame,
-            text="Switch to EK Civic Analog Cluster",
+            text="Switch to EK Civic Cluster",
             command=self.toggle_cluster,
             bg="#222222",
             fg="#ffffff",
@@ -67,6 +69,7 @@ class ClusterApp:
         self.clusters = {
             "s2000": S2000Cluster(self, self.canvas),
             "ek_civic": EKCivicCluster(self, self.canvas),
+            "del_sol": DelSolCluster(self, self.canvas),
         }
 
         self.draw_static_base()
@@ -75,12 +78,16 @@ class ClusterApp:
     def toggle_cluster(self):
         if self.cluster_mode == "s2000":
             self.cluster_mode = "ek_civic"
-            self.toggle_btn.config(text="Switch to S2000 Digital Cluster")
-            self.root.title("Honda EK Civic OEM Analog Cluster")
-        else:
+            self.toggle_btn.config(text="Switch to Del Sol Cluster")
+            self.root.title("Honda EK Civic Cluster")
+        elif self.cluster_mode == "ek_civic":
+            self.cluster_mode = "del_sol"
+            self.toggle_btn.config(text="Switch to S2000 Cluster")
+            self.root.title("Honda Del Sol Cluster")
+        else:  # del_sol
             self.cluster_mode = "s2000"
-            self.toggle_btn.config(text="Switch to EK Civic Analog Cluster")
-            self.root.title("Honda S2000 AP1 Digital Cluster")
+            self.toggle_btn.config(text="Switch to EK Civic Cluster")
+            self.root.title("Honda S2000 AP1 Cluster")
 
         self.draw_static_base()
         self.update_cluster(self.current_rpm)

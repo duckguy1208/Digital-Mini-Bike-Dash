@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 import tkinter as tk
 
 from clusters.base_cluster import BaseCluster
@@ -9,6 +10,11 @@ class S2000Cluster(BaseCluster):
         super().__init__(app, canvas)
         self.MAX_RPM = 11000
         self.NUM_BARS = 60
+        if not hasattr(self.app, "main_odo_miles"):
+            self.app.main_odo_miles = 0.0
+        if not hasattr(self.app, "trip_hours"):
+            self.app.trip_hours = 0.0
+        self.last_odo_time = datetime.now()
 
     def get_s2000_arc(self, t):
         x1 = 110 + (t * 630)
@@ -44,15 +50,34 @@ class S2000Cluster(BaseCluster):
 
         self.app.speed_label = tk.Label(
             self.canvas, text="0", font=("Consolas", 68, "bold"),
-            fg="#ffb400", bg="#0b0b0b"
+            fg="#ffb400", bg="#ff8200"
         )
-        self.app.speed_window = self.canvas.create_window(425, 245, window=self.app.speed_label)
-        self.canvas.create_text(550, 280, text="mph", fill="#ffaa00", font=("Arial", 14, "bold"))
+        self.canvas.create_rectangle(347, 305, 502, 325, fill="#FF8200", outline="#FF8200")
 
-        self.canvas.create_text(110, 310, text="C", fill="#ffaa00", font=("Arial", 11, "bold"))
-        self.canvas.create_text(180, 310, text="H", fill="#ffaa00", font=("Arial", 11, "bold"))
-        self.canvas.create_text(665, 310, text="E", fill="#ffaa00", font=("Arial", 11, "bold"))
-        self.canvas.create_text(732, 310, text="F", fill="#ffaa00", font=("Arial", 11, "bold"))
+        self.app.speed_window = self.canvas.create_window(425, 245, window=self.app.speed_label)
+
+        # main odometer (miles) and trip hours display — centered in the smaller rectangle
+        self.main_odo_text_id = self.canvas.create_text(
+            385, 313,
+            text=f"{int(self.app.main_odo_miles):06d}",
+            fill="#000000",
+            font=("Consolas", 10, "bold")
+        )
+        self.trip_text_id = self.canvas.create_text(
+            455, 313,
+            text=f"{self.app.trip_hours:.2f} hr",
+            fill="#000000",
+            font=("Consolas", 9, "bold")
+        )
+        # draw the "mph" and "km/h" labels next to the speed display
+        self.canvas.create_text(550, 260, text="mph", fill="#ffaa00", font=("Arial", 14, "bold"))
+        self.canvas.create_text(550, 285, text="km/h", fill="#4e3400", font=("Arial", 14, "bold"))
+
+        # draw the "C" and "H" for coolant temp, and "E" and "F" for fuel level
+        self.canvas.create_text(110, 285, text="C", fill="#ffaa00", font=("Arial", 11, "bold"))
+        self.canvas.create_text(180, 285, text="H", fill="#ffaa00", font=("Arial", 11, "bold"))
+        self.canvas.create_text(665, 285, text="E", fill="#ffaa00", font=("Arial", 11, "bold"))
+        self.canvas.create_text(732, 285, text="F", fill="#ffaa00", font=("Arial", 11, "bold"))
 
         for i in range(self.NUM_BARS):
             t = i / float(self.NUM_BARS - 1)
@@ -101,21 +126,42 @@ class S2000Cluster(BaseCluster):
         simulated_speed = int((rpm / 11000.0) * 145) if rpm > 500 else 0
         self.app.speed_label.config(text=str(simulated_speed))
 
+        # update odometer and trip hours based on displayed speed and elapsed time
+        now = datetime.now()
+        dt = (now - getattr(self, "last_odo_time", now)).total_seconds()
+        self.last_odo_time = now
+
+        if simulated_speed > 0 and dt > 0:
+            distance_increment = (simulated_speed / 3600.0) * dt
+            self.app.main_odo_miles += distance_increment
+            if rpm > 100:
+                self.app.trip_hours += (dt / 3600.0)
+
+            try:
+                self.canvas.itemconfig(self.main_odo_text_id, text=f"{int(self.app.main_odo_miles):06d}")
+                self.canvas.itemconfig(self.trip_text_id, text=f"{self.app.trip_hours:.2f} hr")
+            except Exception:
+                pass
+
         self.canvas.delete("temp_bars")
         active_temp_bars = int((self.app.current_temp / 100.0) * 7)
+        # move temp bars up to align with the left-side letters (near the tach)
         for i in range(7):
             x = 122 + (i * 7)
             color = "#ffaa00" if i < active_temp_bars else "#221500"
             if i >= 5 and i < active_temp_bars:
                 color = "#ff1a1a"
-            self.canvas.create_rectangle(x, 303, x + 4, 317, fill=color, outline="", tags="temp_bars")
+            # raised vertical position (y 275-289)
+            self.canvas.create_rectangle(x, 275, x + 4, 289, fill=color, outline="", tags="temp_bars")
 
         self.canvas.delete("fuel_bars")
         active_fuel_bars = int((self.app.current_fuel / 100.0) * 7)
+        # move fuel bars up to align with the right-side letters (near the tach)
         for i in range(7):
             x = 676 + (i * 7)
             if i < active_fuel_bars:
                 color = "#ff1a1a" if active_fuel_bars <= 2 else "#ffaa00"
             else:
                 color = "#221500"
-            self.canvas.create_rectangle(x, 303, x + 4, 317, fill=color, outline="", tags="fuel_bars")
+            # raised vertical position (y 275-289)
+            self.canvas.create_rectangle(x, 275, x + 4, 289, fill=color, outline="", tags="fuel_bars")

@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 import tkinter as tk
 
 from clusters.base_cluster import BaseCluster
@@ -7,10 +8,16 @@ from clusters.base_cluster import BaseCluster
 class EKCivicCluster(BaseCluster):
     def __init__(self, app, canvas):
         super().__init__(app, canvas)
+        if not hasattr(self.app, "main_odo_miles"):
+            self.app.main_odo_miles = 0.0
+        if not hasattr(self.app, "trip_hours"):
+            self.app.trip_hours = 0.0
+        # track last update time for odometer distance integration
+        self.last_odo_time = datetime.now()
 
     def draw_static_base(self):
         self.canvas.delete("all")
-        self.canvas.config(bg="#111215")
+        self.canvas.config(bg="#0b0b0b")
 
         self.app.info_text = self.canvas.create_text(
             425, 395,
@@ -80,6 +87,25 @@ class EKCivicCluster(BaseCluster):
         # Create the circular speedometer face and its numbered tick marks.
         self.draw_analog_dial(425, 200, 140, "MPH", font_size=9, label_offset=-200)
         self.draw_analog_ticks(425, 200, 140, min_val=0, max_val=100, step=10, redline_val=99, label_font_size=15)
+
+        # Odometer displays (main and trip) positioned above/below speedometer
+        self.canvas.create_rectangle(385, 160, 455, 176, fill="#08090b", outline="#333333")
+        self.main_odo_text_id = self.canvas.create_text(
+            425, 168,
+            text=f"{int(self.app.main_odo_miles):06d}",
+            fill="#ffffff",
+            font=("Consolas", 9, "bold"),
+            tags="main_odo"
+        )
+
+        self.canvas.create_rectangle(395, 210, 445, 224, fill="#08090b", outline="#333333")
+        self.trip_odo_text_id = self.canvas.create_text(
+            425, 217,
+            text=f"{self.app.trip_hours:.2f} hr",
+            fill="#ffffff",
+            font=("Consolas", 8, "bold"),
+            tags="trip_odo"
+        )
 
         # --- DRAW THE TACHOMETER ---
         # Create the circular tachometer face and its tick marks, including the highlighted red zone.
@@ -198,6 +224,24 @@ class EKCivicCluster(BaseCluster):
         speed_angle = 210 - (speed_frac * 240)
         self.draw_needle(425, 200, 105, speed_angle, color=NEEDLE_COLOR, width=4)
 
+        # Update odometers based on the displayed speed (mph) and elapsed time
+        now = datetime.now()
+        dt = (now - getattr(self, "last_odo_time", now)).total_seconds()
+        self.last_odo_time = now
+
+        if simulated_speed > 0 and dt > 0:
+            distance_increment = (simulated_speed / 3600.0) * dt
+            self.app.main_odo_miles += distance_increment
+            # trip is now an hour meter: only count when engine running (>100 RPM)
+            if rpm > 100:
+                self.app.trip_hours += (dt / 3600.0)
+
+            try:
+                self.canvas.itemconfig(self.main_odo_text_id, text=f"{int(self.app.main_odo_miles):06d}")
+                self.canvas.itemconfig(self.trip_odo_text_id, text=f"{self.app.trip_hours:.2f} hr")
+            except Exception:
+                pass
+
         # --- DRAW THE FUEL AND TEMPERATURE NEEDLES ---
         f_px, f_py = 605, 200
         t_px, t_py = 755, 200
@@ -213,4 +257,3 @@ class EKCivicCluster(BaseCluster):
         temp_frac = max(0.0, min(self.app.current_temp / 100.0, 1.0))
         temp_angle = 220 - (temp_frac * 80)
         self.draw_needle(t_px, t_py, 52, temp_angle, color=NEEDLE_COLOR, width=3, tag="ek_temp_needle")
-
