@@ -50,7 +50,7 @@ class S2000Cluster(BaseCluster):
 
         self.app.speed_label = tk.Label(
             self.canvas, text="0", font=("Consolas", 68, "bold"),
-            fg="#ffb400", bg="#ff8200"
+            fg="#FF8200", bg="#0b0b0b"
         )
         self.canvas.create_rectangle(347, 305, 502, 325, fill="#FF8200", outline="#FF8200")
 
