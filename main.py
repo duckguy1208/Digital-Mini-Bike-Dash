@@ -1,4 +1,17 @@
-import tkinter as tk
+import sys
+
+# If running on MicroPython (ESP32 hardware or Wokwi simulator):
+if getattr(sys, "implementation", None) and sys.implementation.name == "micropython":
+    import esp32_dash
+    esp32_dash.run_dash()
+    sys.exit()
+
+try:
+    import tkinter as tk
+except ImportError:
+    import esp32_dash
+    esp32_dash.run_dash()
+    sys.exit()
 
 from clusters.ek_civic_cluster import EKCivicCluster
 from clusters.s2000_cluster import S2000Cluster

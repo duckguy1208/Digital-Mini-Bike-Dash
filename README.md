@@ -53,14 +53,24 @@ This project emulates the iconic **Honda S2000 AP1 digital tachometer/speedomete
 
 ## Software & Simulation Setup
 
-### Running Tkinter Prototyping Code (Desktop)
+### Running Desktop Prototype (Tkinter)
 1. Ensure Python 3.x is installed on your computer.
-2. Run `python cluster_sim.py` in your terminal or via VS Code to launch the interactive PC cluster simulator.
+2. Run `python main.py` in your terminal to launch the interactive PC cluster simulator.
+   - **Controls:** Move mouse left/right for RPM throttle, scroll wheel for Temp/Fuel, click to swap clusters.
 
-### Testing MicroPython in VS Code (Wokwi Simulator)
+### Testing MicroPython in Wokwi Simulator
+The repository is pre-configured with a 320x240 ILI9341 SPI TFT, RPM potentiometer, and mode button in `diagram.json`.
+
+#### Option A: Wokwi Web (Zero Installation)
+1. Go to [wokwi.com/micropython/esp32](https://wokwi.com/micropython/esp32).
+2. Copy the contents of `diagram.json` into the **diagram.json** tab.
+3. Add `ili9341.py` and `esp32_dash.py` (or paste into `main.py`).
+4. Click **Play** — watch the startup sweep and turn the RPM potentiometer knob to accelerate!
+
+#### Option B: VS Code Extension
 1. Install the **Wokwi Simulator** extension in VS Code.
-2. Ensure `wokwi.toml`, `diagram.json`, and `main.py` are present in the project root.
-3. Open the VS Code Command Palette (`F1` / `Cmd+Shift+P`) and select **Wokwi: Start Simulator**.
+2. Download the generic MicroPython ESP32 `.bin` firmware and save it as `firmware.bin` (or point `wokwi.toml` to it).
+3. Open Command Palette (`F1` / `Cmd+Shift+P`) and choose **Wokwi: Start Simulator**.
 
 ---
 

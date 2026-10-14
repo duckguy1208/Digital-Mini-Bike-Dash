@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "author": "Mini Bike Dash",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 20,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ili9341",
+      "id": "lcd",
+      "top": -80,
+      "left": 220,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_rpm",
+      "top": -80,
+      "left": -120,
+      "attrs": { "label": "RPM Throttle" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_aux",
+      "top": 80,
+      "left": -120,
+      "attrs": { "label": "Temp/Fuel" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_mode",
+      "top": 240,
+      "left": -120,
+      "attrs": { "color": "orange", "label": "Cluster Swap" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "lcd:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "lcd:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "lcd:CS", "esp:15", "green", [ "v0" ] ],
+    [ "lcd:D/C", "esp:2", "blue", [ "v0" ] ],
+    [ "lcd:MOSI", "esp:23", "orange", [ "v0" ] ],
+    [ "lcd:SCK", "esp:18", "yellow", [ "v0" ] ],
+    [ "lcd:MISO", "esp:19", "gray", [ "v0" ] ],
+    [ "pot_rpm:1", "esp:GND.2", "black", [ "v0" ] ],
+    [ "pot_rpm:2", "esp:34", "purple", [ "v0" ] ],
+    [ "pot_rpm:3", "esp:3V3", "red", [ "v0" ] ],
+    [ "pot_aux:1", "esp:GND.2", "black", [ "v0" ] ],
+    [ "pot_aux:2", "esp:35", "cyan", [ "v0" ] ],
+    [ "pot_aux:3", "esp:3V3", "red", [ "v0" ] ],
+    [ "btn_mode:1.1", "esp:GND.2", "black", [ "v0" ] ],
+    [ "btn_mode:2.1", "esp:21", "orange", [ "v0" ] ]
+  ]
+}
