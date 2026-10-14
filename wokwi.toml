@@ -1,11 +1,7 @@
-# Wokwi Configuration File
-# Documentation: https://docs.wokwi.com/vscode/project-config
+# Wokwi MicroPython Configuration File
+# Reference: https://docs.wokwi.com/vscode/project-config
 [wokwi]
 version = 1
-firmware = 'firmware.bin'
-elf = 'firmware.elf'
-
-# Optional: To interact with MicroPython REPL via mpremote in VS Code:
-# [[net.forward]]
-# from = 'localhost:4000'
-# to = 'target:4000'
+firmware = "firmware.bin"
+elf = "firmware.bin"
+rfc2217ServerPort = 4000

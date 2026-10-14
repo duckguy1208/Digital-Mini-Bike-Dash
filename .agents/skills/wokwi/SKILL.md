@@ -39,12 +39,8 @@ Tells the Wokwi VS Code extension where to locate firmware binaries:
 [wokwi]
 version = 1
 firmware = "firmware.bin"
-elf = "firmware.elf"
-
-# Optional RFC2217 serial forwarding for MicroPython REPL / mpremote:
-# [[net.forward]]
-# from = "localhost:4000"
-# to = "target:4000"
+elf = "firmware.bin"
+rfc2217ServerPort = 4000
 ```
 
 ---

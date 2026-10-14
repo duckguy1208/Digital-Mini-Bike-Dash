@@ -68,9 +68,17 @@ The repository is pre-configured with a 320x240 ILI9341 SPI TFT, RPM potentiomet
 4. Click **Play** — watch the startup sweep and turn the RPM potentiometer knob to accelerate!
 
 #### Option B: VS Code Extension
+The MicroPython runtime (`firmware.bin`) is pre-installed in the repository.
 1. Install the **Wokwi Simulator** extension in VS Code.
-2. Download the generic MicroPython ESP32 `.bin` firmware and save it as `firmware.bin` (or point `wokwi.toml` to it).
-3. Open Command Palette (`F1` / `Cmd+Shift+P`) and choose **Wokwi: Start Simulator**.
+2. Press `F1` (or `Cmd+Shift+P`), select **Wokwi: Start Simulator**, and keep the simulator tab visible in the foreground.
+3. In your VS Code terminal, execute the dashboard:
+   ```bash
+   python3 -m mpremote wokwi run esp32_dash.py
+   ```
+   *(To permanently copy the code to the simulated flash so it boots automatically every time:)*
+   ```bash
+   python3 -m mpremote wokwi fs cp ili9341.py :ili9341.py + fs cp esp32_dash.py :main.py + repl
+   ```
 
 ---
 
