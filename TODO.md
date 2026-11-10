@@ -1,8 +1,6 @@
 () code speedometer 
 
-() code tachometer
-
-() code temperature sensor 
+() code tachometer 
 
 () code ability to change for two strokes or multi cylinder engines
 
