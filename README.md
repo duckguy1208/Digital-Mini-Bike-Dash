@@ -1,8 +1,8 @@
 # DIY Raspberry Pi Honda-Style Digital Cluster for Pit Bikes
 
-An open-source, low-cost digital dashboard designed for small motorcycles, dirt bikes, and pit bikes (specifically built for a **Lifan 125cc swapped CRF50** And a **Built GX200 swapped RT100**). 
+An open-source, low-cost digital dashboard designed for small motorcycles, dirt bikes, and pit bikes (specifically built for a **125cc Mini Jeep** **Lifan 125cc swapped CRF50** And a **Built GX200 swapped RT100**). 
 
-This project emulates the iconic **Honda S2000 AP1 digital tachometer/speedometer arc** and an **EG Civic analog cluster**, 
+This project emulates the iconic **Honda S2000 AP1 digital tachometer/speedometer arc** **EG Civic analog cluster** and a **Del Sol analog cluster** with more on the way.
 
 ---
 
